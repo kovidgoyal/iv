@@ -137,4 +137,4 @@ class View(QWebEngineView):
         self._page = Page(profile, self)
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
-        self.setHtml('<body></body>')
+        self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))

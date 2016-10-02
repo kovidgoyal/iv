@@ -4,7 +4,6 @@ from __python__ import hash_literals, bound_methods
 from pythonize import strings
 strings()
 
-from elementmaker import E
 from grid import create_grid
 
 tnum = 0
@@ -31,9 +30,4 @@ def report_error(msg, script_url, line_number, column_number, error_object):
 
 window.onload = def():
     window.onerror = report_error
-    document.body.appendChild(E.style('''
-    body, div { margin: 0; padding: 0 }
-    '''))
-    document.body.style.backgroundColor = 'gray'
     document.body.appendChild(create_grid())
-    window.send_message_to_python('print_msg', msg='hi')

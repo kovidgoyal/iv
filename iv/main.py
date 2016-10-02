@@ -68,7 +68,7 @@ def main():
                 print(_('{} is not a supported file type').format(f), file=sys.stderr)
     if not files:
         raise SystemExit(_('No files to display were found'))
-    app = QApplication([appname, '--disable-web-security'])
+    app = QApplication([appname])
     w = MainWindow(files)
     w.show()
     app.exec_()
