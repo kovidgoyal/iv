@@ -1,0 +1,105 @@
+# vim:fileencoding=utf-8
+# License: GPL v3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
+# noqa: eol-semicolon
+from __python__ import hash_literals, bound_methods
+
+from elementmaker import E
+from gettext import gettext as _
+
+from utils import human_readable
+
+THUMBNAIL_MAX_WIDTH = 300
+THUMBNAIL_MAX_HEIGHT = 400
+
+
+def on_img_error(err):
+    img = err.target
+    div = img.parentNode
+    if not div:
+        return
+    div.innerHTML = ''
+    md = window.files[img.dataset.key]
+    div.appendChild(E.div(
+        style='position:relative; top:-50%; transform: translateY(50%)',
+        E.h2(_('Could not load'), style='text-align:center; font-size:larger; font-weight: bold'),
+        E.h2(md.name, style='text-align:center; font-size:larger; font-weight: bold'),
+        style='border:dashed 1px currentColor; border_radius: 10px'
+    ))
+
+def tooltip(key, w, h):
+    md = window.files[key]
+    sz = human_readable(md.size)
+    d = Date(0)
+    d.setSeconds(float(md.mtime))
+    if w? and h?:
+        return f'<i>{md.name}</i>\n{w}x{h}\n{sz}\n{d.toDateString()}'
+    else:
+        return f'<i>{md.name}</i>\n{sz}\n{d.toDateString()}'
+
+def on_img_load():
+    w, h = this.width, this.height
+    c = document.getElementById('img' + this.dataset.container_id)
+    c.appendChild(this)
+    this.dataset.tooltip = tooltip(this.dataset.key, w, h)
+
+def show_tooltip(ev):
+    img = ev.currentTarget
+    tt = ev.currentTarget.dataset.tooltip
+    div = document.getElementById('thumbnail-tooltip')
+    div.innerHTML = tt
+    br = img.getBoundingClientRect()
+    if br.left < window.innerWidth / 2:
+        div.style.left, div.style.right = f'calc({br.right}px - 1rem)', 'auto'
+    else:
+        div.style.left, div.style.right = 'auto', f'calc({document.body.clientWidth - br.left}px - 1rem)'
+    div.style.top = f'{window.pageYOffset + br.top}px'
+    div.style.display = 'block'
+
+def hide_tooltip(ev):
+    document.getElementById('thumbnail-tooltip').style.display = 'none'
+
+def create_item(f):
+    create_item.count += 1
+    img = new Image()
+    img.dataset.key = f
+    img.dataset.container_id = str(create_item.count)
+    img.onload = on_img_load
+    img.onerror = on_img_error
+    img.setAttribute('style', 'white-space:pre; max-width: 100%; max-height: 100%; display: block; width:auto; height:auto;')
+    img.src = f
+    img.dataset.tooltip = tooltip(f)
+    style = 'margin: 10px; display: flex; align-content: flex-end; align-items: flex-end; justify-content: space-between;'
+    style += f'width: 64px; height: 64px; max-width: {THUMBNAIL_MAX_WIDTH}px; max-height: {THUMBNAIL_MAX_HEIGHT}px; min-width: {THUMBNAIL_MAX_WIDTH//3}px; min-height: {THUMBNAIL_MAX_HEIGHT//3}px; cursor:pointer'
+    div = E.div(style=style, id='img' + create_item.count, class_='thumbnail')
+    img.onmouseenter = show_tooltip
+    img.onmouseleave = hide_tooltip
+    return div
+create_item.count = 0
+
+def create_grid():
+    css = '''
+    .thumbnail > img:hover {
+        transform: scale(2);
+    }
+    #thumbnail-tooltip {
+        z-index: 2;
+        display: none;
+        cursor: default;
+        white-space: pre-wrap;
+        position:absolute;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 1ex 1rem;
+        border-radius: 4px;
+        color: white;
+        pointer-events: none;
+    }
+    '''
+    ans = E.div(id='grid', style='overflow-x:hidden; min-height: 100vh')
+    ans.appendChild(E.style(css, type='text/css'))
+    c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none')
+    ans.appendChild(c)
+    for f in window.filelist:
+        c.appendChild(create_item(f))
+    ans.appendChild(E.div(id='thumbnail-tooltip'))
+    return ans
+

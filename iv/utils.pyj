@@ -1,0 +1,20 @@
+# vim:fileencoding=utf-8
+# License: GPL v3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
+from __python__ import hash_literals, bound_methods
+
+
+def human_readable(size, sep=' '):
+    divisor, suffix = 1, "B"
+    for i, candidate in enumerate(('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB')):
+        if size < (1 << ((i + 1) * 10)):
+            divisor, suffix = (1 << (i * 10)), candidate
+            break
+    size = (float(size)/divisor) + ''
+    pos = size.find(".")
+    if pos > -1:
+        size = size[:pos + 2]
+    if size.endswith('.0'):
+        size = size[:-2]
+    return size + sep + suffix
+
+
