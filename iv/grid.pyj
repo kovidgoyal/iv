@@ -5,6 +5,7 @@ from __python__ import hash_literals, bound_methods
 
 from elementmaker import E
 from gettext import gettext as _
+from keycodes import get_key
 
 from utils import human_readable, debounce
 
@@ -174,6 +175,7 @@ def change_thumbnail_size(new_size):
             ts.maxWidth = ts.minWidth = ts.width = f'{new_size}px'
             if not t.classList.contains('empty'):
                 ts.maxHeight = ts.minHeight = ts.height = f'{new_size}px'
+        update_loaded_images()
 
 def onscroll(ev):
     if document.getElementById('grid').style.display is not 'none':
@@ -182,6 +184,29 @@ def onscroll(ev):
 def onresize(ev):
     if document.getElementById('grid').style.display is not 'none':
         setTimeout(update_loaded_images, 0)
+
+def bump_thumbnail_size(decrease):
+    delta = 0.2 * current_thumbnail_size
+    if decrease:
+        delta *= -1
+    sz = current_thumbnail_size + delta
+    sz = max(32, min(sz, 500))
+    change_thumbnail_size(sz)
+
+def onwheel(ev):
+    nonlocal current_thumbnail_size
+    if ev.ctrlKey and ev.deltaY is not 0:
+        ev.preventDefault(), ev.stopPropagation()
+        bump_thumbnail_size(ev.deltaY > 0)
+
+def onkeydown(ev):
+    key = get_key(ev)
+    if key is '+':
+        ev.preventDefault(), ev.stopPropagation()
+        bump_thumbnail_size()
+    elif key is '-':
+        ev.preventDefault(), ev.stopPropagation()
+        bump_thumbnail_size(True)
 
 def sort_key(f):
     return f.rpartition('/')[::2]
@@ -236,5 +261,6 @@ def create_grid():
     for i in range(PLACEHOLDER_COUNT):
         c.appendChild(E.div(class_='thumbnail empty'))
     ans.appendChild(E.div(id='thumbnail-tooltip'))
+    ans.addEventListener('mousewheel', onwheel, True)
     return ans
 

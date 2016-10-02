@@ -4,7 +4,7 @@ from __python__ import hash_literals, bound_methods
 from pythonize import strings
 strings()
 
-from grid import create_grid, update_loaded_images
+from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown
 
 tnum = 0
 
@@ -32,3 +32,11 @@ window.onload = def():
     window.onerror = report_error
     document.body.appendChild(create_grid())
     update_loaded_images()
+    document.addEventListener('keydown', def(ev):
+        handler = None
+        if document.getElementById('grid').style.display is not 'none':
+            handler = grid_onkeydown
+        if handler:
+            if handler(ev):
+                ev.preventDefault(), ev.stopPropagation()
+    , True)
