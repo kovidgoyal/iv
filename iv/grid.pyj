@@ -107,7 +107,7 @@ def create_grid():
         pointer-events: none;
     }
     '''.replace(/{sz}/g, '128')
-    ans = E.div(id='grid', style='overflow-x:hidden; min-height: 100vh')
+    ans = E.div(id='grid', style='overflow:hidden; min-height: 100vh')
     ans.appendChild(E.style(css, type='text/css'))
     c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none; overflow:hidden')
     ans.appendChild(c)
