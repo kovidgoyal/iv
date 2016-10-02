@@ -53,8 +53,7 @@ def client_script():
 
 
 def files_data(files):
-    src = 'filelist = ' + json.dumps(list(files)) + ';'
-    src += 'files = ' + json.dumps(dict(files)) + ';'
+    src = 'image_data = ' + json.dumps(dict(files)) + ';'
     return create_script('files-data.js', src)
 
 

@@ -5,7 +5,6 @@
 import os
 import sys
 import argparse
-from collections import OrderedDict
 import mimetypes
 from gettext import gettext as _
 
@@ -22,7 +21,7 @@ def is_supported_file_type(f):
 
 def files_from_dir(d):
     for dirpath, dirnames, filenames in os.walk(d):
-        for f in sorted(filter(is_supported_file_type, filenames)):
+        for f in filter(is_supported_file_type, filenames):
             yield os.path.join(dirpath, f)
 
 
@@ -56,7 +55,7 @@ class MainWindow(QMainWindow):
 def main():
     args = parse_args()
 
-    files = OrderedDict()
+    files = {}
     for f in args.files:
         if os.path.isdir(f):
             for cf in files_from_dir(f):

@@ -4,25 +4,51 @@
 from __python__ import hash_literals, bound_methods
 
 from elementmaker import E
-# from gettext import gettext as _
+from gettext import gettext as _
 
-from utils import human_readable
+from utils import human_readable, debounce
 
+PLACEHOLDER_COUNT = 50
+SPACING = 10
 
-def on_img_error(err):
-    div = document.getElementById('img' + this.dataset.container_id)
+id_map = {}
+current_thumbnail_size = 128
+image_refs = {}
+
+def show_text(key, txt, showing):
+    div = document.getElementById(id_map[key])
     div.innerHTML = ''
-    md = window.files[this.dataset.key]
-    div.appendChild(E.div(
-        E.div(md.name, style='text-align:center;'),
-    ))
+    div.appendChild(E.div(style='width:100%; height:100%', E.div(style='text-align:center;')))
+    div.lastChild.lastChild.innerHTML = txt
+    div.dataset.showing = showing or 'text'
+    div = div.firstChild
     div.style.border = 'dashed 1px'
     div.style.display = 'flex'
     div.style.alignItems = 'center'
     div.style.justifyContent = 'center'
 
+def show_image(key):
+    img = new Image()
+    img.dataset.key = key
+    img.dataset.tooltip = tooltip(key)
+    img.dataset.container_id = id_map[key]
+    img.onload = on_img_load
+    img.onerror = on_img_error
+    img.src = key
+    image_refs[key] = img
+    show_text(key, _('Loading...'), 'image')
+
+def on_img_error(err):
+    key = this.dataset.key
+    div = document.getElementById(id_map[key])
+    md = window.image_data[key]
+    show_text(key, md.name, 'image')
+    v'delete image_refs[key]'
+    div.dataset.showing = 'image'
+    div.dataset.img_failed = '1'
+
 def tooltip(key, w, h):
-    md = window.files[key]
+    md = window.image_data[key]
     sz = human_readable(md.size)
     d = Date(0)
     d.setSeconds(float(md.mtime))
@@ -33,11 +59,12 @@ def tooltip(key, w, h):
 
 def on_img_load():
     w, h = this.width, this.height
-    c = document.getElementById('img' + this.dataset.container_id)
-    c.appendChild(this)
     this.dataset.tooltip = tooltip(this.dataset.key, w, h)
     this.onmouseenter = show_tooltip
     this.onmouseleave = hide_tooltip
+    div = document.getElementById(this.dataset.container_id)
+    div.innerHTML = ''
+    div.appendChild(this)
 
 def show_tooltip(ev):
     img = ev.currentTarget
@@ -55,23 +82,116 @@ def show_tooltip(ev):
 def hide_tooltip(ev):
     document.getElementById('thumbnail-tooltip').style.display = 'none'
 
-def create_item(f):
+def create_item(key):
     create_item.count += 1
-    img = new Image()
-    img.dataset.key = f
-    img.dataset.container_id = str(create_item.count)
-    img.onload = on_img_load
-    img.onerror = on_img_error
-    img.src = f
-    img.dataset.tooltip = tooltip(f)
-    div = E.div(id='img' + create_item.count, class_='thumbnail item')
+    id_map[key] = 'img' + create_item.count
+    div = E.div(id=id_map[key], class_='thumbnail item', data_key=key)
+    setTimeout(def():
+        show_text(key, _('Loading...'))
+    , 0)
     return div
+
 create_item.count = 0
 
+
+def get_container(elem):
+    while elem and elem.classList:
+        if elem.classList.contains('thumbnail'):
+            return elem
+        elem = elem.parentNode
+
+def sibling_distance(first, last):
+    ans = 0
+    while first and first is not last:
+        first = first.nextSibling
+        ans += 1
+    return ans
+
+def nth_sibling(origin, axis, n):
+    while n > 0:
+        q = origin[axis]
+        if not q:
+            return origin
+        n -= 1
+        origin = q
+    return origin
+
+def update_loaded_images():
+    br = document.getElementById('grid').getBoundingClientRect()
+    if br.height < window.innerHeight + 100:
+        items = document.getElementsByClassName('thumbnail item')
+        first, last = items[0], items[-1]
+    else:
+        first = last = None
+        for dx in range(5, br.width, 5):
+            if not first:
+                for dy in range(5, window.innerHeight, 5):
+                    elem = get_container(document.elementFromPoint(dx, dy))
+                    if elem:
+                        first = elem
+                        break
+        for dx in range(5, br.width, 5):
+            if not last:
+                for dy in range(5, window.innerHeight, 5):
+                    elem = get_container(document.elementFromPoint(window.innerWidth - dx, window.innerHeight - dy))
+                    if elem:
+                        last = elem
+                        break
+    if first and last:
+        number_per_screen = sibling_distance(first, last)
+        first = nth_sibling(first, 'previousSibling', number_per_screen)
+        last = nth_sibling(last, 'nextSibling', number_per_screen)
+        seen_first = seen_last = False
+        for node in first.parentNode.childNodes:
+            if node.dataset.key:
+                if seen_last:
+                    needs_image = False
+                else:
+                    seen_last = node is last
+                    if seen_first:
+                        needs_image = True
+                    else:
+                        seen_first = node is first
+                        needs_image = seen_first
+                if needs_image:
+                    if node.dataset.showing is not 'image':
+                        if not node.dataset.img_failed:
+                            show_image(node.dataset.key)
+                else:
+                    if node.dataset.showing is not 'text':
+                        show_text(node.dataset.key, _('Loading...'))
+                        v'delete image_refs[node.dataset.key]'
+            else:
+                break
+
+
+def change_thumbnail_size(new_size):
+    nonlocal current_thumbnail_size
+    if new_size is not current_thumbnail_size:
+        current_thumbnail_size = new_size
+        for t in document.getElementsByClassName('thumbnail'):
+            ts = t.style
+            ts.maxWidth = ts.minWidth = ts.width = f'{new_size}px'
+            if not t.classList.contains('empty'):
+                ts.maxHeight = ts.minHeight = ts.height = f'{new_size}px'
+
+def onscroll(ev):
+    if document.getElementById('grid').style.display is not 'none':
+        setTimeout(update_loaded_images, 0)
+
+def onresize(ev):
+    if document.getElementById('grid').style.display is not 'none':
+        setTimeout(update_loaded_images, 0)
+
+def sort_key(f):
+    return f.rpartition('/')[::2]
+
 def create_grid():
+    window.addEventListener('scroll', debounce(onscroll, 250))
+    window.addEventListener('resize', debounce(onresize, 250))
     css = '''
     .thumbnail {
-        margin: 10px;
+        margin: {margin}px;
         display: flex;
         align-items: flex-end;
         justify-content: center;
@@ -106,14 +226,14 @@ def create_grid():
         color: white;
         pointer-events: none;
     }
-    '''.replace(/{sz}/g, '128')
+    '''.replace(/{sz}/g, str(current_thumbnail_size)).replace(/{margin}/g, str(SPACING))
     ans = E.div(id='grid', style='overflow:hidden; min-height: 100vh')
     ans.appendChild(E.style(css, type='text/css'))
     c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none; overflow:hidden')
     ans.appendChild(c)
-    for f in window.filelist:
+    for f in sorted(window.image_data, key=sort_key):
         c.appendChild(create_item(f))
-    for i in range(50):
+    for i in range(PLACEHOLDER_COUNT):
         c.appendChild(E.div(class_='thumbnail empty'))
     ans.appendChild(E.div(id='thumbnail-tooltip'))
     return ans
