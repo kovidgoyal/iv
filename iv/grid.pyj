@@ -7,13 +7,12 @@ from elementmaker import E
 from gettext import gettext as _
 from keycodes import get_key
 
-from utils import human_readable, debounce
+from utils import human_readable, debounce, update_settings
 
 PLACEHOLDER_COUNT = 50
 SPACING = 10
 
 id_map = {}
-current_thumbnail_size = 128
 image_refs = {}
 
 def show_text(key, txt, showing):
@@ -169,9 +168,9 @@ def update_loaded_images():
 
 
 def change_thumbnail_size(new_size):
-    nonlocal current_thumbnail_size
-    if new_size is not current_thumbnail_size:
-        current_thumbnail_size = new_size
+    new_size = int(new_size)
+    if new_size is not window.config.thumbnail_size:
+        window.config.thumbnail_size = new_size
         for t in document.getElementsByClassName('thumbnail'):
             ts = t.style
             ts.maxWidth = ts.minWidth = ts.width = f'{new_size}px'
@@ -180,6 +179,7 @@ def change_thumbnail_size(new_size):
                 cs = t.lastChild.style
                 cs.maxWidth = cs.minWidth = cs.width = f'{new_size}px'
         update_loaded_images()
+        update_settings()
 
 def onscroll(ev):
     if document.getElementById('grid').style.display is not 'none':
@@ -190,21 +190,22 @@ def onresize(ev):
         setTimeout(update_loaded_images, 0)
 
 def bump_thumbnail_size(decrease):
-    delta = 0.2 * current_thumbnail_size
+    delta = 32
     if decrease:
         delta *= -1
-    sz = current_thumbnail_size + delta
+    sz = window.config.thumbnail_size + delta
     sz = max(32, min(sz, 500))
     change_thumbnail_size(sz)
 
 def onwheel(ev):
-    nonlocal current_thumbnail_size
     if ev.ctrlKey and ev.deltaY is not 0:
         ev.preventDefault(), ev.stopPropagation()
         bump_thumbnail_size(ev.deltaY > 0)
 
 def toggle_caption():
     document.getElementById('grid').classList.toggle('no-caption')
+    window.config.show_captions ^= True
+    update_settings()
 
 def onkeydown(ev):
     key = get_key(ev)
@@ -281,8 +282,10 @@ def create_grid():
         color: white;
         pointer-events: none;
     }
-    '''.replace(/{sz}/g, str(current_thumbnail_size)).replace(/{margin}/g, str(SPACING))
+    '''.replace(/{sz}/g, str(window.config.thumbnail_size)).replace(/{margin}/g, str(SPACING))
     ans = E.div(id='grid', style='overflow:hidden; min-height: 100vh')
+    if not window.config.show_captions:
+        ans.classList.add('no-caption')
     ans.appendChild(E.style(css, type='text/css'))
     c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none; overflow:hidden')
     ans.appendChild(c)

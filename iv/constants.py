@@ -37,3 +37,26 @@ def _get_cache_dir():
     return ans
 cache_dir = _get_cache_dir()
 del _get_cache_dir
+
+
+def _get_config_dir():
+    if 'IV_CONFIG_DIRECTORY' in os.environ:
+        return os.path.abspath(os.path.expanduser(os.environ['IV_CONFIG_DIRECTORY']))
+
+    candidate = QStandardPaths.writableLocation(QStandardPaths.ConfigLocation)
+    if not candidate:
+        if isosx:
+            candidate = os.path.expanduser('~/Library/Preferences')
+        elif not iswindows:
+            candidate = os.path.expanduser(os.environ.get('XDG_CONFIG_HOME', u'~/.config'))
+    if not candidate:
+        raise RuntimeError(
+            'Failed to find path for application config directory')
+    ans = os.path.join(candidate, appname)
+    try:
+        os.makedirs(ans)
+    except FileExistsError:
+        pass
+    return ans
+config_dir = _get_config_dir()
+del _get_config_dir

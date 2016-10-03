@@ -10,7 +10,7 @@ from functools import lru_cache
 
 from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl
 
-from .constants import appname, cache_dir
+from .constants import appname, cache_dir, config_dir
 
 
 # Settings {{{
@@ -52,8 +52,33 @@ def client_script():
     return create_script(f.name, src)
 
 
+def read_config():
+    if not hasattr(read_config, 'config'):
+        read_config.config = {
+            'thumbnail_size': 128,
+            'show_captions': True,
+        }
+        try:
+            with open(os.path.join(config_dir, 'settings.json'), 'rb') as f:
+                val = json.loads(f.read().decode('utf-8'))
+                if isinstance(val, dict):
+                    read_config.config.update(val)
+        except FileNotFoundError:
+            pass
+    return read_config.config
+
+
+def update_config(vals):
+    c = read_config()
+    c.update(vals)
+    s = json.dumps(c, indent=2, sort_keys=True, ensure_ascii=False).encode('utf-8')
+    with open(os.path.join(config_dir, 'settings.json'), 'wb') as f:
+        f.write(s)
+
+
 def files_data(files):
     src = 'image_data = ' + json.dumps(dict(files)) + ';'
+    src += 'config = ' + json.dumps(read_config()) + ';'
     return create_script('files-data.js', src)
 
 
@@ -119,6 +144,7 @@ class Page(QWebEnginePage):
                     func = getattr(self, msg['func'])
                 except AttributeError:
                     continue
+                del msg['func']
                 func(msg)
 
     def calljs(self, func, *args, callback=None):
@@ -127,6 +153,9 @@ class Page(QWebEnginePage):
             self.runJavaScript(js, QWebEngineScript.ApplicationWorld)
         else:
             self.runJavaScript(js, QWebEngineScript.ApplicationWorld, callback)
+
+    def update_settings(self, vals):
+        update_config(vals)
 
 
 class View(QWebEngineView):
