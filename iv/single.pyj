@@ -8,6 +8,8 @@ from gettext import gettext as _
 from keycodes import get_key
 from utils import tooltip, update_settings
 
+zoom = 1
+
 def show_text(txt):
     single = document.getElementById('single').firstChild
     single.innerHTML = ''
@@ -78,6 +80,23 @@ def set_image(url):
     show_text(_('Loading...'))
     img.src = url
 
+
+def apply_zoom():
+    s = document.querySelector('#single img').style
+    if zoom is 1:
+        s.transform = 'none'
+    else:
+        s.transform = f'scale({zoom})'
+
+def bump_zoom(decrease):
+    nonlocal zoom
+    delta = 0.2 * (-1 if decrease else 1)
+    nz = delta + zoom
+    nz = max(0.2, min(nz, 10))
+    if nz is not zoom:
+        zoom = nz
+        apply_zoom()
+
 def onkeydown(ev):
     key = get_key(ev)
     if key is 'escape':
@@ -87,3 +106,14 @@ def onkeydown(ev):
         window.config.show_single_caption ^= True
         caption_elem().style.display = 'block' if window.config.show_single_caption else 'none'
         update_settings()
+        return True
+    if key is '+':
+        bump_zoom()
+        return True
+    if key is '-':
+        bump_zoom(True)
+        return True
+    if key is '0':
+        nonlocal zoom
+        zoom = 1
+        apply_zoom()
