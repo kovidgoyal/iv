@@ -28,8 +28,7 @@ python3 /path/to/cloned/repository /path/to/image/directory
 Controls
 ===========
 
-`iv` is largely keyboard controlled. The keyboard shortcuts in the two view
-are:
+`iv` is largely keyboard controlled. The keyboard shortcuts in the two views are:
 
 Grid View
 -------------
