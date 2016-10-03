@@ -4,8 +4,8 @@ from __python__ import hash_literals, bound_methods
 from pythonize import strings
 strings()
 
-from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown
-from single import create_single, set_image, onkeydown as single_onkeydown
+from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown, reload_thumbnail
+from single import create_single, set_image, onkeydown as single_onkeydown, reload_image
 
 tnum = 0
 
@@ -44,6 +44,11 @@ window.show_grid = def show_grid():
     document.getElementById('grid').style.display = 'block'
     window.send_message_to_python('showing_grid')
     window.scrollTo(0, last_y_pos)
+
+window.image_changed = def image_changed(key, metadata):
+    window.image_data[key] = metadata
+    reload_thumbnail(key)
+    reload_image(key)
 
 window.onload = def():
     window.onerror = report_error

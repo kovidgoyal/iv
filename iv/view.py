@@ -120,7 +120,7 @@ def path_to_url(f):
 
 def file_metadata(f):
     st = os.stat(f)
-    return {'name': os.path.basename(f), 'mtime': st.st_mtime, 'size': st.st_size, 'ctime': st.st_ctime}
+    return {'name': os.path.basename(f), 'mtime': st.st_mtime, 'size': st.st_size, 'ctime': st.st_ctime, 'path': f}
 
 
 class Page(QWebEnginePage):
@@ -178,3 +178,6 @@ class View(QWebEngineView):
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))
+
+    def image_changed(self, key, metadata):
+        self._page.calljs('image_changed', key, metadata)

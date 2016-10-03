@@ -6,7 +6,7 @@ from __python__ import hash_literals, bound_methods
 from elementmaker import E
 from gettext import gettext as _
 from keycodes import get_key
-from utils import tooltip, update_settings
+from utils import tooltip, update_settings, refresh_img
 
 zoom = 1
 
@@ -21,7 +21,7 @@ def on_img_load_error(ev):
 def on_img_load(ev):
     single = document.getElementById('single').firstChild
     single.innerHTML = ''
-    set_caption(tooltip(this.dataset.key, this.width, this.height))
+    set_caption(tooltip(this.dataset.key, this.naturalWidth, this.naturalHeight))
     single.appendChild(this)
 
 
@@ -120,5 +120,10 @@ def onkeydown(ev):
         return True
     if key is 'r' or key is 'f5':
         i = document.querySelector('#single img')
-        i.src = i.src.split('#')[0] + '#' + window.performance.now()
+        refresh_img(i)
         return True
+
+def reload_image(key):
+    i = document.querySelector('#single img')
+    if i and i.dataset.key is key:
+        refresh_img(i)

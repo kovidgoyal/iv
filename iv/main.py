@@ -8,7 +8,7 @@ import argparse
 import mimetypes
 from gettext import gettext as _
 
-from PyQt5.Qt import QApplication, QMainWindow, QMessageBox
+from PyQt5.Qt import QApplication, QMainWindow, QMessageBox, QFileSystemWatcher, Qt, QTimer
 
 from .constants import appname
 from .view import View, create_profile, path_to_url, file_metadata
@@ -42,6 +42,13 @@ class MainWindow(QMainWindow):
         self.view.set_title.connect(self.set_title)
         self.setCentralWidget(self.view)
         self.files = files
+        self.file_watcher = QFileSystemWatcher([f['path'] for f in files.values()], self)
+        self.file_watcher.fileChanged.connect(self.file_changed, type=Qt.QueuedConnection)
+        self.changed_files = set()
+        self.debounce = QTimer()
+        self.debounce.setInterval(1000)
+        self.debounce.timeout.connect(self.do_file_changed)
+        self.debounce.setSingleShot(True)
         self.set_title(None)
 
     def excepthook(self, exctype, value, traceback):
@@ -58,6 +65,17 @@ class MainWindow(QMainWindow):
         title = val or (_('{} images').format(len(self.files)))
         title += ' :: ' + appname
         self.setWindowTitle(title)
+
+    def file_changed(self, path):
+        self.changed_files.add(path)
+        self.debounce.start()
+
+    def do_file_changed(self):
+        files, self.changed_files = self.changed_files, set()
+        for path in files:
+            url = path_to_url(path)
+            if url in self.files:
+                self.view.image_changed(url, file_metadata(path))
 
 
 def main():

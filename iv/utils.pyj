@@ -54,3 +54,5 @@ def tooltip(key, w, h):
     else:
         return f'<i>{md.name}</i>\n{sz}\n{d.toDateString()}'
 
+def refresh_img(img):
+    img.src = img.dataset.key + '?r=' + window.performance.now()
