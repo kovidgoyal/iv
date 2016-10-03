@@ -212,6 +212,9 @@ def onkeydown(ev):
     elif key is 'c':
         toggle_caption()
         return True
+    elif key is 'r' or key is 'f5':
+        for img in document.querySelectorAll('#grid img'):
+            img.src = img.src.split('#')[0] + '#' + window.performance.now()
 
 def sort_key(f):
     return f.rpartition('/')[::2]

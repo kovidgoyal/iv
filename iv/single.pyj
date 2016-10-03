@@ -117,3 +117,8 @@ def onkeydown(ev):
         nonlocal zoom
         zoom = 1
         apply_zoom()
+        return True
+    if key is 'r' or key is 'f5':
+        i = document.querySelector('#single img')
+        i.src = i.src.split('#')[0] + '#' + window.performance.now()
+        return True
