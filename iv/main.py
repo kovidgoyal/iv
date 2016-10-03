@@ -75,7 +75,10 @@ class MainWindow(QMainWindow):
         for path in files:
             url = path_to_url(path)
             if url in self.files:
-                self.view.image_changed(url, file_metadata(path))
+                try:
+                    self.view.image_changed(url, file_metadata(path))
+                except FileNotFoundError:
+                    pass
 
 
 def main():
