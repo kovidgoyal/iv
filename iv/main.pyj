@@ -5,7 +5,7 @@ from pythonize import strings
 strings()
 
 from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown
-from single import create_single, set_image
+from single import create_single, set_image, onkeydown as single_onkeydown
 
 tnum = 0
 
@@ -55,6 +55,8 @@ window.onload = def():
         handler = None
         if document.getElementById('grid').style.display is not 'none':
             handler = grid_onkeydown
+        elif document.getElementById('single').style.display is not 'none':
+            handler = single_onkeydown
         if handler:
             if handler(ev):
                 ev.preventDefault(), ev.stopPropagation()

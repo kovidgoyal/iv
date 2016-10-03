@@ -5,6 +5,7 @@ from __python__ import hash_literals, bound_methods
 
 from elementmaker import E
 from gettext import gettext as _
+from keycodes import get_key
 
 def show_text(txt):
     single = document.getElementById('single').firstChild
@@ -47,3 +48,8 @@ def set_image(url):
     show_text(_('Loading...'))
     img.src = url
 
+def onkeydown(ev):
+    key = get_key(ev)
+    if key is 'escape':
+        window.show_grid()
+        return True

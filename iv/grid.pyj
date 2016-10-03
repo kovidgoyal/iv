@@ -204,13 +204,14 @@ def onclick():
 def onkeydown(ev):
     key = get_key(ev)
     if key is '+':
-        ev.preventDefault(), ev.stopPropagation()
         bump_thumbnail_size()
+        return True
     elif key is '-':
-        ev.preventDefault(), ev.stopPropagation()
         bump_thumbnail_size(True)
+        return True
     elif key is 'c':
         toggle_caption()
+        return True
 
 def sort_key(f):
     return f.rpartition('/')[::2]
