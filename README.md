@@ -12,9 +12,9 @@ will always be current.
 Dependencies
 ==============
 
-python >= 3.5
-PyQt >= 5.7
-rapydscript-ng >= 0.7.9
+* python >= 3.5
+* PyQt >= 5.7
+* rapydscript-ng >= 0.7.9
 
 Installation
 ==============
