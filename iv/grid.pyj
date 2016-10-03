@@ -77,7 +77,8 @@ def show_tooltip(ev):
         div.style.left, div.style.right = f'{br.right}px', 'auto'
     else:
         div.style.left, div.style.right = 'auto', f'{document.body.clientWidth - br.left}px'
-    div.style.top = f'{window.pageYOffset + br.top}px'
+    y = window.pageYOffset + max(0, br.top)
+    div.style.top = f'{y}px'
     div.style.display = 'block'
 
 def hide_tooltip(ev):
