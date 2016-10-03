@@ -201,6 +201,9 @@ def onwheel(ev):
         ev.preventDefault(), ev.stopPropagation()
         bump_thumbnail_size(ev.deltaY > 0)
 
+def toggle_caption():
+    document.getElementById('grid').classList.toggle('no-caption')
+
 def onkeydown(ev):
     key = get_key(ev)
     if key is '+':
@@ -209,6 +212,8 @@ def onkeydown(ev):
     elif key is '-':
         ev.preventDefault(), ev.stopPropagation()
         bump_thumbnail_size(True)
+    elif key is 'c':
+        toggle_caption()
 
 def sort_key(f):
     return f.rpartition('/')[::2]
@@ -217,7 +222,7 @@ def create_grid():
     window.addEventListener('scroll', debounce(onscroll, 250))
     window.addEventListener('resize', debounce(onresize, 250))
     css = '''
-    .thumbnail {
+    #grid .thumbnail {
         margin: {margin}px;
         display: flex;
         flex-direction: column;
@@ -230,13 +235,13 @@ def create_grid():
         height: {sz}px;
         width: {sz}px;
     }
-    .thumbnail > img {
+    #grid .thumbnail > img {
         cursor: pointer;
         max-width: 100%;
         max-height: 100%;
         display: block;
     }
-    .thumbnail > .caption {
+    #grid .thumbnail > .caption {
         max-width: {sz}px;
         width: {sz}px;
         font-size: smaller;
@@ -248,15 +253,21 @@ def create_grid():
         overflow: hidden;
         transform: translateY(-100%);
         position: absolute;
+        pointer-events: none;
     }
-    .thumbnail > img:hover {
+
+    #grid.no-caption .thumbnail > .caption {
+        display: none;
+    }
+
+    #grid .thumbnail > img:hover {
         z-index: 2;
         transform: scale(2);
     }
-    .thumbnail.empty {
+    #grid .thumbnail.empty {
         height: 0; max-height: 0; min-height: 0;
     }
-    #thumbnail-tooltip {
+    #grid #thumbnail-tooltip {
         z-index: 5;
         display: none;
         cursor: default;
