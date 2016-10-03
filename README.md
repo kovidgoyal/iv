@@ -37,7 +37,7 @@ Grid View
 * `c` - Toggle the captions
 * `+` - Increase thumbnail size
 * `-` - Decrease thumbnail size
-* 'r', 'F5' - Reload all thumbnails
+* `r`, `F5` - Reload all thumbnails
 
 Single Image View
 -------------------
@@ -46,4 +46,4 @@ Single Image View
 * `+` - Zoom in
 * `-` - Zoom out
 * `0` - Reset zoom to no zoom
-* 'r', 'F5' - Reload image
+* `r`, `F5` - Reload image
