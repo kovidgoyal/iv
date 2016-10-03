@@ -6,6 +6,7 @@ from __python__ import hash_literals, bound_methods
 from elementmaker import E
 from gettext import gettext as _
 from keycodes import get_key
+from utils import tooltip, update_settings
 
 def show_text(txt):
     single = document.getElementById('single').firstChild
@@ -18,7 +19,16 @@ def on_img_load_error(ev):
 def on_img_load(ev):
     single = document.getElementById('single').firstChild
     single.innerHTML = ''
+    set_caption(tooltip(this.dataset.key, this.width, this.height))
     single.appendChild(this)
+
+
+def caption_elem():
+    return document.querySelector('#single > span')
+
+def set_caption(txt):
+    c = caption_elem()
+    c.innerHTML = txt
 
 def create_single():
     ans = E.div(id='single')
@@ -30,21 +40,41 @@ def create_single():
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
     }
 
     #single > div > img {
         max-width: 100%
         max-height: 100%;
         display: block;
-   }
+    }
+
+    #single > span {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        white-space: pre-wrap;
+        position:absolute;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 1ex 1rem;
+        border-radius: 4px;
+        color: white;
+        pointer-events: none;
+    }
     ''', type='text/css'))
+    ans.appendChild(E.span())
+    if not window.config.show_single_caption:
+        ans.lastChild.style.display = 'none'
 
     return ans
 
 def set_image(url):
+    set_caption(tooltip(url))
     img = new Image()
     img.onerror = on_img_load_error
     img.onload = on_img_load
+    img.dataset.key = url
     show_text(_('Loading...'))
     img.src = url
 
@@ -53,3 +83,7 @@ def onkeydown(ev):
     if key is 'escape':
         window.show_grid()
         return True
+    if key is 'c':
+        window.config.show_single_caption ^= True
+        caption_elem().style.display = 'block' if window.config.show_single_caption else 'none'
+        update_settings()

@@ -57,6 +57,7 @@ def read_config():
         read_config.config = {
             'thumbnail_size': 128,
             'show_captions': True,
+            'show_single_caption': True,
         }
         try:
             with open(os.path.join(config_dir, 'settings.json'), 'rb') as f:
