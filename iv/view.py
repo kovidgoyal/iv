@@ -92,7 +92,7 @@ def insert_scripts(profile, *scripts):
         sc.insert(script)
 
 
-def create_profile(files, parent=None, private=False):
+def create_profile(files, parent=None, private=True):
     if parent is None:
         parent = QApplication.instance()
     if private:
