@@ -2,7 +2,8 @@ iv -- Image Viewer
 =========================
 
 A simple image viewer that can recursively display images from directories in a
-grid. Click on any image to display it full size.
+grid. Click on any image to display it full size. Auto-reloads images if
+they are changed on disk.
 
 Supports all image formats used on the web including animated GIFs and SVG.
 
