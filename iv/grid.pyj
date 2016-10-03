@@ -7,7 +7,7 @@ from elementmaker import E
 from gettext import gettext as _
 from keycodes import get_key
 
-from utils import human_readable, debounce, update_settings
+from utils import tooltip, debounce, update_settings
 
 PLACEHOLDER_COUNT = 50
 SPACING = 10
@@ -47,21 +47,12 @@ def on_img_error(err):
     div.dataset.showing = 'image'
     div.dataset.img_failed = '1'
 
-def tooltip(key, w, h):
-    md = window.image_data[key]
-    sz = human_readable(md.size)
-    d = Date(0)
-    d.setSeconds(float(md.mtime))
-    if w? and h?:
-        return f'<i>{md.name}</i>\n{w}x{h}\n{sz}\n{d.toDateString()}'
-    else:
-        return f'<i>{md.name}</i>\n{sz}\n{d.toDateString()}'
-
 def on_img_load():
     w, h = this.width, this.height
     this.dataset.tooltip = tooltip(this.dataset.key, w, h)
     this.onmouseenter = show_tooltip
     this.onmouseleave = hide_tooltip
+    this.onclick = onclick
     div = document.getElementById(this.dataset.container_id)
     div.innerHTML = ''
     div.appendChild(this)
@@ -206,6 +197,9 @@ def toggle_caption():
     document.getElementById('grid').classList.toggle('no-caption')
     window.config.show_captions ^= True
     update_settings()
+
+def onclick():
+    window.show_image(this.dataset.key)
 
 def onkeydown(ev):
     key = get_key(ev)

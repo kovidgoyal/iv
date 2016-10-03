@@ -43,3 +43,14 @@ def update_settings():
     msg = {}
     Object.assign(msg, window.config)
     window.send_message_to_python('update_settings', **msg)
+
+def tooltip(key, w, h):
+    md = window.image_data[key]
+    sz = human_readable(md.size)
+    d = Date(0)
+    d.setSeconds(float(md.mtime))
+    if w? and h?:
+        return f'<i>{md.name}</i>\n{w}x{h}\n{sz}\n{d.toDateString()}'
+    else:
+        return f'<i>{md.name}</i>\n{sz}\n{d.toDateString()}'
+

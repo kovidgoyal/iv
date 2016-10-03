@@ -1,0 +1,49 @@
+# vim:fileencoding=utf-8
+# License: GPL v3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
+# noqa: eol-semicolon
+from __python__ import hash_literals, bound_methods
+
+from elementmaker import E
+from gettext import gettext as _
+
+def show_text(txt):
+    single = document.getElementById('single').firstChild
+    single.innerHTML = ''
+    single.appendChild(E.div(txt, style='text-align: center'))
+
+def on_img_load_error(ev):
+    show_text(_('Failed to load image:') + ' ' + this.src)
+
+def on_img_load(ev):
+    single = document.getElementById('single').firstChild
+    single.innerHTML = ''
+    single.appendChild(this)
+
+def create_single():
+    ans = E.div(id='single')
+    ans.appendChild(E.div())
+    ans.appendChild(E.style('''
+    #single > div {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #single > div > img {
+        max-width: 100%
+        max-height: 100%;
+        display: block;
+   }
+    ''', type='text/css'))
+
+    return ans
+
+def set_image(url):
+    img = new Image()
+    img.onerror = on_img_load_error
+    img.onload = on_img_load
+    show_text(_('Loading...'))
+    img.src = url
+
