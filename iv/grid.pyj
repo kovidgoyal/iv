@@ -177,6 +177,8 @@ def change_thumbnail_size(new_size):
             ts.maxWidth = ts.minWidth = ts.width = f'{new_size}px'
             if not t.classList.contains('empty'):
                 ts.maxHeight = ts.minHeight = ts.height = f'{new_size}px'
+                cs = t.lastChild.style
+                cs.maxWidth = cs.minWidth = cs.width = f'{new_size}px'
         update_loaded_images()
 
 def onscroll(ev):
