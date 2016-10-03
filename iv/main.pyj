@@ -34,10 +34,12 @@ window.show_image = def show_image(url):
     document.getElementById('grid').style.display = 'none'
     document.getElementById('single').style.display = 'block'
     set_image(url)
+    window.send_message_to_python('showing_image', url=url)
 
 window.show_grid = def show_grid():
     document.getElementById('single').style.display = 'none'
     document.getElementById('grid').style.display = 'block'
+    window.send_message_to_python('showing_grid')
 
 window.onload = def():
     window.onerror = report_error

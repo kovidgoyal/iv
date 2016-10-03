@@ -39,7 +39,10 @@ class MainWindow(QMainWindow):
         sys.excepthook = self.excepthook
         self.profile = create_profile(files)
         self.view = View(self.profile, self)
+        self.view.set_title.connect(self.set_title)
         self.setCentralWidget(self.view)
+        self.files = files
+        self.set_title(None)
 
     def excepthook(self, exctype, value, traceback):
         if exctype == KeyboardInterrupt:
@@ -50,6 +53,11 @@ class MainWindow(QMainWindow):
         except Exception:
             msg = repr(value)
         QMessageBox.critical(self, _('Unhandled error'), msg)
+
+    def set_title(self, val):
+        title = val or (_('{} images').format(len(self.files)))
+        title += ' :: ' + appname
+        self.setWindowTitle(title)
 
 
 def main():
@@ -68,6 +76,8 @@ def main():
     if not files:
         raise SystemExit(_('No files to display were found'))
     app = QApplication([appname])
+    app.setApplicationName(appname)
+    app.setOrganizationName(appname)
     w = MainWindow(files)
     w.show()
     app.exec_()

@@ -8,7 +8,7 @@ import json
 import subprocess
 from functools import lru_cache
 
-from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl
+from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl, pyqtSignal
 
 from .constants import appname, cache_dir, config_dir
 
@@ -124,6 +124,8 @@ def file_metadata(f):
 
 class Page(QWebEnginePage):
 
+    set_title = pyqtSignal(object)
+
     def __init__(self, profile, parent):
         QWebEnginePage.__init__(self, profile, parent)
 
@@ -157,12 +159,21 @@ class Page(QWebEnginePage):
     def update_settings(self, vals):
         update_config(vals)
 
+    def showing_grid(self, data):
+        self.set_title.emit(None)
+
+    def showing_image(self, data):
+        self.set_title.emit(os.path.basename(QUrl(data['url']).toLocalFile()))
+
 
 class View(QWebEngineView):
+
+    set_title = pyqtSignal(object)
 
     def __init__(self, profile, parent=None):
         QWebEngineView.__init__(self, parent)
         self._page = Page(profile, self)
+        self._page.set_title.connect(self.set_title.emit)
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))
