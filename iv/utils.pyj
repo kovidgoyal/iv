@@ -44,9 +44,15 @@ def update_settings():
     Object.assign(msg, window.config)
     window.send_message_to_python('update_settings', **msg)
 
+def get_metadata(key):
+    ans = window.image_data[key]
+    if not ans or not ans.name:
+        ans = {'size':0, 'mtime': 0, 'ctime': 0, 'name':'......'}
+    return ans
+
 def tooltip(key, w, h):
-    md = window.image_data[key]
-    sz = human_readable(md.size)
+    md = get_metadata(key)
+    sz = human_readable(int(md.size))
     d = Date(0)
     d.setSeconds(float(md.mtime))
     if w? and h?:

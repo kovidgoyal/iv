@@ -4,7 +4,8 @@ from __python__ import hash_literals, bound_methods
 from pythonize import strings
 strings()
 
-from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown, reload_thumbnail
+import traceback
+from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown, reload_thumbnail, refresh as refresh_grid
 from single import create_single, set_image, onkeydown as single_onkeydown, reload_image
 
 tnum = 0
@@ -27,7 +28,12 @@ window.send_message_to_python = def send_message_to_python(func, **kw):
 
 
 def report_error(msg, script_url, line_number, column_number, error_object):
-    print(msg, line_number, column_number)
+    tb = ''
+    if error_object:
+        tb = traceback.format_exc(error_object).join('')
+        print(tb)
+    window.send_message_to_python('unhandled_error', msg=msg, tb=tb)
+    return True
 
 last_y_pos = 0
 
@@ -49,6 +55,10 @@ window.image_changed = def image_changed(key, metadata):
     window.image_data[key] = metadata
     reload_thumbnail(key)
     reload_image(key)
+
+window.refresh_files = def refresh_files(image_data):
+    window.image_data = image_data
+    refresh_grid()
 
 window.onload = def():
     window.onerror = report_error

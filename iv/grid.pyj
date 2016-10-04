@@ -7,7 +7,7 @@ from elementmaker import E
 from gettext import gettext as _
 from keycodes import get_key
 
-from utils import tooltip, debounce, update_settings, refresh_img
+from utils import tooltip, debounce, update_settings, refresh_img, get_metadata
 
 PLACEHOLDER_COUNT = 50
 SPACING = 10
@@ -41,7 +41,7 @@ def show_image(key):
 def on_img_error(err):
     key = this.dataset.key
     div = document.getElementById(id_map[key])
-    md = window.image_data[key]
+    md = get_metadata(key)
     show_text(key, md.name, 'image')
     v'delete image_refs[key]'
     div.dataset.showing = 'image'
@@ -56,7 +56,9 @@ def on_img_load():
     div = document.getElementById(this.dataset.container_id)
     div.innerHTML = ''
     div.appendChild(this)
-    div.appendChild(E.div(window.image_data[this.dataset.key].name.rpartition('.')[0], class_='caption'))
+    sz = window.config.thumbnail_size + 'px'
+    div.appendChild(E.div(get_metadata(this.dataset.key).name.rpartition('.')[0], class_='caption',
+                          style=f'width:{sz}; max-width:{sz}'))
 
 def show_tooltip(ev):
     img = ev.currentTarget
@@ -78,13 +80,22 @@ def hide_tooltip(ev):
 def create_item(key):
     create_item.count += 1
     id_map[key] = 'img' + create_item.count
-    div = E.div(id=id_map[key], class_='thumbnail item', data_key=key)
+    sz = window.config.thumbnail_size + 'px'
+    div = E.div(id=id_map[key], class_='thumbnail item', data_key=key,
+                style=f'width:{sz}; height:{sz}; max-width:{sz}; min-width: {sz}; max-height: {sz}; min-height: {sz}')
     setTimeout(def():
         show_text(key, _('Loading...'))
     , 0)
     return div
 
-create_item.count = 0
+def create_items(c):
+    create_item.count = 0
+    c = c or document.getElementById('grid-inner')
+    c.innerHTML = ''
+    for f in sorted(window.image_data, key=sort_key):
+        c.appendChild(create_item(f))
+    for i in range(PLACEHOLDER_COUNT):
+        c.appendChild(E.div(class_='thumbnail empty'))
 
 
 def get_container(elem):
@@ -157,7 +168,6 @@ def update_loaded_images():
             else:
                 break
 
-
 def change_thumbnail_size(new_size):
     new_size = int(new_size)
     if new_size is not window.config.thumbnail_size:
@@ -224,6 +234,12 @@ def reload_thumbnail(key):
 def sort_key(f):
     return f.rpartition('/')[::2]
 
+def refresh():
+    y = window.scrollY
+    create_items()
+    setTimeout(update_loaded_images, 0)
+    window.scrollY = y
+
 def create_grid():
     window.addEventListener('scroll', debounce(onscroll, 250))
     window.addEventListener('resize', debounce(onresize, 250))
@@ -234,12 +250,6 @@ def create_grid():
         flex-direction: column;
         align-items: center;
         justify-content: flex-end;
-        max-width: {sz}px;
-        max-height: {sz}px;
-        min-width: {sz}px;
-        min-height: {sz}px;
-        height: {sz}px;
-        width: {sz}px;
     }
     #grid .thumbnail > img {
         cursor: pointer;
@@ -248,8 +258,6 @@ def create_grid():
         display: block;
     }
     #grid .thumbnail > .caption {
-        max-width: {sz}px;
-        width: {sz}px;
         font-size: smaller;
         background-color: rgba(0,0,0,0.7);
         color: white;
@@ -285,17 +293,14 @@ def create_grid():
         color: white;
         pointer-events: none;
     }
-    '''.replace(/{sz}/g, str(window.config.thumbnail_size)).replace(/{margin}/g, str(SPACING))
+    '''.replace(/{margin}/g, str(SPACING))
     ans = E.div(id='grid', style='overflow:hidden; min-height: 100vh')
     if not window.config.show_captions:
         ans.classList.add('no-caption')
     ans.appendChild(E.style(css, type='text/css'))
-    c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none; overflow:hidden')
+    c = E.div(style='display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; align-content: flex-start; user-select: none; overflow:hidden', id='grid-inner')
     ans.appendChild(c)
-    for f in sorted(window.image_data, key=sort_key):
-        c.appendChild(create_item(f))
-    for i in range(PLACEHOLDER_COUNT):
-        c.appendChild(E.div(class_='thumbnail empty'))
+    create_items(c)
     ans.appendChild(E.div(id='thumbnail-tooltip'))
     ans.addEventListener('mousewheel', onwheel, True)
     return ans
