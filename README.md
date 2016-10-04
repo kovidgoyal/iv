@@ -47,3 +47,4 @@ Single Image View
 * `-` - Zoom out
 * `0` - Reset zoom to no zoom
 * `r`, `F5` - Reload image
+* `Esc` - Go back to the grid view
