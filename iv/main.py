@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
 
     def file_changed(self, path):
+        if not os.access(path, os.R_OK):
+            self.files.pop(path_to_url(path), None)
         self.changed_files.add(path)
         self.debounce_files.start()
 
@@ -85,8 +87,8 @@ class MainWindow(QMainWindow):
             if url in self.files:
                 try:
                     self.view.image_changed(url, file_metadata(path))
-                except FileNotFoundError:
-                    pass
+                except EnvironmentError:
+                    del self.files[url]
 
     def do_dir_changed(self):
         dirs, self.changed_dirs = self.changed_dirs, set()
@@ -99,6 +101,7 @@ class MainWindow(QMainWindow):
         for f in added_files:
             try:
                 self.files[path_to_url(f)] = file_metadata(f)
+                self.file_watcher.addPath(f)
             except EnvironmentError:
                 continue
         self.view.refresh_files(self.files)
