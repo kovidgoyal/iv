@@ -7,8 +7,9 @@ import glob
 import json
 import subprocess
 from functools import lru_cache
+from gettext import gettext as _
 
-from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl, pyqtSignal
+from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl, pyqtSignal, QMessageBox
 
 from .constants import appname, cache_dir, config_dir
 
@@ -78,7 +79,7 @@ def update_config(vals):
 
 
 def files_data(files):
-    src = 'image_data = ' + json.dumps(dict(files)) + ';'
+    src = 'image_data = ' + json.dumps(files) + ';'
     src += 'config = ' + json.dumps(read_config()) + ';'
     return create_script('files-data.js', src)
 
@@ -166,6 +167,10 @@ class Page(QWebEnginePage):
     def showing_image(self, data):
         self.set_title.emit(os.path.basename(QUrl(data['url']).toLocalFile()))
 
+    def unhandled_error(self, data):
+        if False:  # disabled in case there is continuous looping error which can the dialog to popup infinitely
+            QMessageBox.critical(self.parent(), _('Unhandled error'), data['msg'])
+
 
 class View(QWebEngineView):
 
@@ -181,3 +186,6 @@ class View(QWebEngineView):
 
     def image_changed(self, key, metadata):
         self._page.calljs('image_changed', key, metadata)
+
+    def refresh_files(self, files):
+        self._page.calljs('refresh_files', files)

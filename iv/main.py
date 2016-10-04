@@ -42,13 +42,17 @@ class MainWindow(QMainWindow):
         self.view.set_title.connect(self.set_title)
         self.setCentralWidget(self.view)
         self.files = files
-        self.file_watcher = QFileSystemWatcher([f['path'] for f in files.values()], self)
+        self.directories = {os.path.dirname(f['path']) for f in files.values()}
+        self.file_watcher = QFileSystemWatcher([f['path'] for f in files.values()] + list(self.directories), self)
         self.file_watcher.fileChanged.connect(self.file_changed, type=Qt.QueuedConnection)
+        self.file_watcher.directoryChanged.connect(self.directory_changed, type=Qt.QueuedConnection)
         self.changed_files = set()
-        self.debounce = QTimer()
-        self.debounce.setInterval(1000)
-        self.debounce.timeout.connect(self.do_file_changed)
-        self.debounce.setSingleShot(True)
+        self.changed_dirs = set()
+        self.debounce_files, self.debounce_dirs = QTimer(), QTimer()
+        for t in self.debounce_files, self.debounce_dirs:
+            t.setInterval(1000), t.setSingleShot(True)
+        self.debounce_files.timeout.connect(self.do_file_changed)
+        self.debounce_dirs.timeout.connect(self.do_dir_changed)
         self.set_title(None)
 
     def excepthook(self, exctype, value, traceback):
@@ -68,7 +72,11 @@ class MainWindow(QMainWindow):
 
     def file_changed(self, path):
         self.changed_files.add(path)
-        self.debounce.start()
+        self.debounce_files.start()
+
+    def directory_changed(self, path):
+        self.changed_dirs.add(path)
+        self.debounce_dirs.start()
 
     def do_file_changed(self):
         files, self.changed_files = self.changed_files, set()
@@ -80,6 +88,21 @@ class MainWindow(QMainWindow):
                 except FileNotFoundError:
                     pass
 
+    def do_dir_changed(self):
+        dirs, self.changed_dirs = self.changed_dirs, set()
+        all_files = {f['path'] for f in self.files.values()}
+        added_files = set()
+        for path in dirs:
+            for f in files_from_dir(path):
+                if f not in all_files:
+                    added_files.add(f)
+        for f in added_files:
+            try:
+                self.files[path_to_url(f)] = file_metadata(f)
+            except EnvironmentError:
+                continue
+        self.view.refresh_files(self.files)
+
 
 def main():
     args = parse_args()
@@ -88,7 +111,10 @@ def main():
     for f in args.files:
         if os.path.isdir(f):
             for cf in files_from_dir(f):
-                files[path_to_url(cf)] = file_metadata(cf)
+                try:
+                    files[path_to_url(cf)] = file_metadata(cf)
+                except EnvironmentError:
+                    continue
         else:
             if is_supported_file_type(f):
                 files[path_to_url(f)] = file_metadata(f)
