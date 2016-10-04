@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
         self.profile = create_profile(files)
         self.view = View(self.profile, self)
         self.view.set_title.connect(self.set_title)
+        self.view.refresh_all.connect(self.refresh_all)
         self.setCentralWidget(self.view)
         self.files = files
         self.directories = {os.path.dirname(f['path']) for f in files.values()}
@@ -101,10 +102,39 @@ class MainWindow(QMainWindow):
         for f in added_files:
             try:
                 self.files[path_to_url(f)] = file_metadata(f)
-                self.file_watcher.addPath(f)
             except EnvironmentError:
                 continue
+            else:
+                d = os.path.dirname(f)
+                self.directories.add(d)
+                self.file_watcher.addPaths([d, f])
         self.view.refresh_files(self.files)
+
+    def refresh_all(self):
+        roots = set()
+        for d in sorted(self.directories):
+            for r in roots:
+                if d.startswith(r):
+                    break
+            else:
+                roots.add(d)
+        files = {}
+        for cf in original_files:
+            try:
+                files[path_to_url(cf)] = file_metadata(cf)
+            except EnvironmentError:
+                continue
+        for f in roots:
+            for cf in files_from_dir(f):
+                try:
+                    files[path_to_url(cf)] = file_metadata(cf)
+                except EnvironmentError:
+                    continue
+        self.files = files
+        self.directories = {os.path.dirname(f['path']) for f in files.values()}
+        self.view.refresh_files(self.files)
+
+original_files = set()
 
 
 def main():
@@ -121,6 +151,7 @@ def main():
         else:
             if is_supported_file_type(f):
                 files[path_to_url(f)] = file_metadata(f)
+                original_files.add(f)
             else:
                 print(_('{} is not a supported file type').format(f), file=sys.stderr)
     if not files:

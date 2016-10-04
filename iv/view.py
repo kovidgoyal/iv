@@ -127,6 +127,7 @@ def file_metadata(f):
 class Page(QWebEnginePage):
 
     set_title = pyqtSignal(object)
+    refresh_all = pyqtSignal()
 
     def __init__(self, profile, parent):
         QWebEnginePage.__init__(self, profile, parent)
@@ -171,15 +172,20 @@ class Page(QWebEnginePage):
         if False:  # disabled in case there is continuous looping error which can the dialog to popup infinitely
             QMessageBox.critical(self.parent(), _('Unhandled error'), data['msg'])
 
+    def refresh_grid(self, data):
+        self.refresh_all.emit()
+
 
 class View(QWebEngineView):
 
     set_title = pyqtSignal(object)
+    refresh_all = pyqtSignal()
 
     def __init__(self, profile, parent=None):
         QWebEngineView.__init__(self, parent)
         self._page = Page(profile, self)
         self._page.set_title.connect(self.set_title.emit)
+        self._page.refresh_all.connect(self.refresh_all.emit)
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))

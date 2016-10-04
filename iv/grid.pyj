@@ -223,8 +223,7 @@ def onkeydown(ev):
         toggle_caption()
         return True
     elif key is 'r' or key is 'f5':
-        for img in document.querySelectorAll('#grid img'):
-            refresh_img(img)
+        window.send_message_to_python('refresh_grid')
 
 def reload_thumbnail(key):
     for img in document.querySelectorAll('#grid img'):
