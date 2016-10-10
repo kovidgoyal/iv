@@ -189,6 +189,15 @@ class View(QWebEngineView):
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))
+        self.renderProcessTerminated.connect(self.render_process_terminated)
+
+    def render_process_terminated(self, termination_type, exit_code):
+        if termination_type == QWebEnginePage.CrashedTerminationStatus:
+            QMessageBox.critical(self.parent(), _('Render process crashed'), _(
+                'The render process crashed while displaying the images with exit code: {}').format(exit_code))
+        elif termination_type == QWebEnginePage.AbnormalTerminationStatus:
+            QMessageBox.critical(self.parent(), _('Render process exited'), _(
+                'The render process exited while displaying the images with exit code: {}').format(exit_code))
 
     def image_changed(self, key, metadata):
         self._page.calljs('image_changed', key, metadata)
