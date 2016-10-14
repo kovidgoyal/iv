@@ -9,6 +9,7 @@ from keycodes import get_key
 from utils import tooltip, update_settings, refresh_img
 
 zoom = 1
+current_url = None
 
 def show_text(txt):
     single = document.getElementById('single').firstChild
@@ -72,13 +73,14 @@ def create_single():
     return ans
 
 def set_image(url):
+    nonlocal current_url
     set_caption(tooltip(url))
     img = new Image()
     img.onerror = on_img_load_error
     img.onload = on_img_load
     img.dataset.key = url
     show_text(_('Loading...'))
-    img.src = url
+    img.src = current_url = url
 
 
 def apply_zoom():
@@ -121,6 +123,12 @@ def onkeydown(ev):
     if key is 'r' or key is 'f5':
         i = document.querySelector('#single img')
         refresh_img(i)
+        return True
+    if key is 'space' or key is 'down' or key is 'right' or key is 'pagedown':
+        window.show_next_image(current_url, 1)
+        return True
+    if key is 'backspace' or key is 'up' or key is 'left' or key is 'pageup':
+        window.show_next_image(current_url, -1)
         return True
 
 def reload_image(key):

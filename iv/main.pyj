@@ -5,7 +5,7 @@ from pythonize import strings
 strings()
 
 import traceback
-from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown, reload_thumbnail, refresh as refresh_grid
+from grid import create_grid, update_loaded_images, onkeydown as grid_onkeydown, reload_thumbnail, refresh as refresh_grid, find_next_image
 from single import create_single, set_image, onkeydown as single_onkeydown, reload_image
 
 tnum = 0
@@ -59,6 +59,11 @@ window.image_changed = def image_changed(key, metadata):
 window.refresh_files = def refresh_files(image_data):
     window.image_data = image_data
     refresh_grid()
+
+window.show_next_image = def show_next_image(key, delta):
+    url = find_next_image(key, delta)
+    if url:
+        window.show_image(url)
 
 window.onload = def():
     window.onerror = report_error

@@ -48,3 +48,5 @@ Single Image View
 * `0` - Reset zoom to no zoom
 * `r`, `F5` - Reload image
 * `Esc` - Go back to the grid view
+* `Space`, `Right`, `Down`, `Pagedown` - Show next image
+* `Backspace`, `Left`, `Up`, `Pageup` - Show previous image

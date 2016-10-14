@@ -123,6 +123,14 @@ def nth_sibling(origin, axis, n):
         origin = q
     return origin
 
+def find_next_image(key, delta):
+    for div in document.querySelectorAll('#grid div.thumbnail.item'):
+        if div.dataset.key is key:
+            ans = nth_sibling(div, 'previousSibling' if delta < 0 else 'nextSibling', abs(delta))
+            if ans is not div:
+                return ans.dataset.key
+            break
+
 def update_loaded_images():
     br = document.getElementById('grid').getBoundingClientRect()
     if br.height < window.innerHeight + 100:
