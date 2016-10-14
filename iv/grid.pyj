@@ -99,8 +99,11 @@ def create_items(c):
 
 
 def get_container(elem):
-    while elem and elem.classList:
-        if elem.classList.contains('thumbnail'):
+    while elem:
+        c = elem.classList
+        if not c:
+            return
+        if c.contains('thumbnail') and c.contains('item'):
             return elem
         elem = elem.parentNode
 
@@ -127,16 +130,16 @@ def update_loaded_images():
         first, last = items[0], items[-1]
     else:
         first = last = None
-        for dx in range(5, br.width, 5):
+        for dy in range(5, window.innerHeight, 5):
             if not first:
-                for dy in range(5, window.innerHeight, 5):
+                for dx in range(5, br.width, 5):
                     elem = get_container(document.elementFromPoint(dx, dy))
                     if elem:
                         first = elem
                         break
-        for dx in range(5, br.width, 5):
+        for dy in range(5, window.innerHeight, 5):
             if not last:
-                for dy in range(5, window.innerHeight, 5):
+                for dx in range(5, br.width, 5):
                     elem = get_container(document.elementFromPoint(window.innerWidth - dx, window.innerHeight - dy))
                     if elem:
                         last = elem
@@ -303,4 +306,3 @@ def create_grid():
     ans.appendChild(E.div(id='thumbnail-tooltip'))
     ans.addEventListener('mousewheel', onwheel, True)
     return ans
-
