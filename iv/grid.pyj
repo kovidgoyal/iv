@@ -227,14 +227,21 @@ def onkeydown(ev):
     if key is '+':
         bump_thumbnail_size()
         return True
-    elif key is '-':
+    if key is '-':
         bump_thumbnail_size(True)
         return True
-    elif key is 'c':
+    if key is 'c':
         toggle_caption()
         return True
-    elif key is 'r' or key is 'f5':
+    if key is 'r' or key is 'f5':
         window.send_message_to_python('refresh_grid')
+        return True
+    if key in 'hk':
+        window.scrollBy(0, -20)
+        return True
+    if key in 'jl':
+        window.scrollBy(0, 20)
+        return True
 
 def reload_thumbnail(key):
     for img in document.querySelectorAll('#grid img'):

@@ -124,10 +124,10 @@ def onkeydown(ev):
         i = document.querySelector('#single img')
         refresh_img(i)
         return True
-    if key is 'space' or key is 'down' or key is 'right' or key is 'pagedown':
+    if key is 'space' or key is 'down' or key is 'right' or key is 'pagedown' or key in 'jl':
         window.show_next_image(current_url, 1)
         return True
-    if key is 'backspace' or key is 'up' or key is 'left' or key is 'pageup':
+    if key is 'backspace' or key is 'up' or key is 'left' or key is 'pageup' or key in 'hk':
         window.show_next_image(current_url, -1)
         return True
 
