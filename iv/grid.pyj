@@ -261,6 +261,7 @@ def create_grid():
     window.addEventListener('scroll', debounce(onscroll, 250))
     window.addEventListener('resize', debounce(onresize, 250))
     css = '''
+    body { font-family: sans-serif }
     #grid .thumbnail {
         margin: {margin}px;
         display: flex;
@@ -282,7 +283,6 @@ def create_grid():
         text-align: center;
         text-overflow: ellipsis;
         overflow: hidden;
-        transform: translateY(-100%);
         position: absolute;
         pointer-events: none;
     }
