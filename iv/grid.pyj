@@ -242,6 +242,9 @@ def onkeydown(ev):
     if key in 'jl':
         window.scrollBy(0, 20)
         return True
+    if key is '0':
+        change_thumbnail_size(128)
+        return True
 
 def reload_thumbnail(key):
     for img in document.querySelectorAll('#grid img'):

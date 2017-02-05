@@ -37,9 +37,10 @@ Grid View
 * `c` - Toggle the captions
 * `+` - Increase thumbnail size
 * `-` - Decrease thumbnail size
+* `0` - Reset thumbnail size to default
 * `r`, `F5` - Reload all thumbnails
 * `j` - Scroll down
-* 'k' - Scroll up
+* `k` - Scroll up
 
 Single Image View
 -------------------
