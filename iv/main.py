@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         sys.excepthook = self.excepthook
         self.profile = create_profile(files)
         self.view = View(self.profile, self)
+        self.profile.setParent(self.view)
         self.view.set_title.connect(self.set_title)
         self.view.refresh_all.connect(self.refresh_all)
         self.setCentralWidget(self.view)
@@ -133,6 +134,7 @@ class MainWindow(QMainWindow):
         self.files = files
         self.directories = {os.path.dirname(f['path']) for f in files.values()}
         self.view.refresh_files(self.files)
+
 
 original_files = set()
 
