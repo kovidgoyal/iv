@@ -9,7 +9,8 @@ import subprocess
 from functools import lru_cache
 from gettext import gettext as _
 
-from PyQt5.Qt import QWebEngineView, QApplication, QWebEngineProfile, QWebEngineScript, QWebEnginePage, Qt, QUrl, pyqtSignal, QMessageBox
+from PyQt5.Qt import QApplication, Qt, QUrl, pyqtSignal, QMessageBox
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript, QWebEngineProfile, QWebEnginePage
 
 from .constants import appname, cache_dir, config_dir
 
