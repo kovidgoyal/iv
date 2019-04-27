@@ -11,7 +11,7 @@ from gettext import gettext as _
 from PyQt5.Qt import QApplication, QMainWindow, QMessageBox, QFileSystemWatcher, Qt, QTimer
 
 from .constants import appname
-from .view import View, create_profile, path_to_url, file_metadata
+from .view import View, setup_profile, path_to_url, file_metadata
 
 
 def is_supported_file_type(f):
@@ -37,9 +37,7 @@ class MainWindow(QMainWindow):
     def __init__(self, files):
         QMainWindow.__init__(self)
         sys.excepthook = self.excepthook
-        self.profile = create_profile(files)
-        self.view = View(self.profile, self)
-        self.profile.setParent(self.view)
+        self.view = View(self)
         self.view.set_title.connect(self.set_title)
         self.view.refresh_all.connect(self.refresh_all)
         self.setCentralWidget(self.view)
@@ -56,6 +54,11 @@ class MainWindow(QMainWindow):
         self.debounce_files.timeout.connect(self.do_file_changed)
         self.debounce_dirs.timeout.connect(self.do_dir_changed)
         self.set_title(None)
+
+    def closeEvent(self, ev):
+        self.view.break_cycles()
+        self.view = None
+        return super().closeEvent(ev)
 
     def excepthook(self, exctype, value, traceback):
         if exctype == KeyboardInterrupt:
@@ -161,6 +164,7 @@ def main():
     app = QApplication([appname])
     app.setApplicationName(appname)
     app.setOrganizationName(appname)
+    setup_profile(files)
     w = MainWindow(files)
     w.show()
     app.exec_()

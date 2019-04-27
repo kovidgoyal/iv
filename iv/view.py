@@ -9,7 +9,7 @@ import subprocess
 from functools import lru_cache
 from gettext import gettext as _
 
-from PyQt5.Qt import QApplication, Qt, QUrl, pyqtSignal, QMessageBox
+from PyQt5.Qt import Qt, QUrl, pyqtSignal, QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript, QWebEngineProfile, QWebEnginePage
 
 from .constants import appname, cache_dir, config_dir
@@ -94,17 +94,12 @@ def insert_scripts(profile, *scripts):
         sc.insert(script)
 
 
-def create_profile(files, parent=None, private=True):
-    if parent is None:
-        parent = QApplication.instance()
-    if private:
-        ans = QWebEngineProfile(parent)
-    else:
-        ans = QWebEngineProfile(appname, parent)
-        ans.setCachePath(os.path.join(cache_dir, appname, 'cache'))
-        safe_makedirs(ans.cachePath())
-        ans.setPersistentStoragePath(os.path.join(cache_dir, appname, 'storage'))
-        safe_makedirs(ans.persistentStoragePath())
+def setup_profile(files):
+    ans = QWebEngineProfile.defaultProfile()
+    ans.setCachePath(os.path.join(cache_dir, appname, 'cache'))
+    safe_makedirs(ans.cachePath())
+    ans.setPersistentStoragePath(os.path.join(cache_dir, appname, 'storage'))
+    safe_makedirs(ans.persistentStoragePath())
     ua = ' '.join(x for x in ans.httpUserAgent().split() if 'QtWebEngine' not in x)
     ans.setHttpUserAgent(ua)
     insert_scripts(ans, files_data(files), client_script())
@@ -130,8 +125,13 @@ class Page(QWebEnginePage):
     set_title = pyqtSignal(object)
     refresh_all = pyqtSignal()
 
-    def __init__(self, profile, parent):
-        QWebEnginePage.__init__(self, profile, parent)
+    def __init__(self, parent):
+        QWebEnginePage.__init__(self, parent)
+
+    def break_cycles(self):
+        self.set_title.disconnect()
+        self.refresh_all.disconnect()
+        self.setParent(None)
 
     def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
         try:
@@ -182,15 +182,24 @@ class View(QWebEngineView):
     set_title = pyqtSignal(object)
     refresh_all = pyqtSignal()
 
-    def __init__(self, profile, parent=None):
+    def __init__(self, parent=None):
         QWebEngineView.__init__(self, parent)
-        self._page = Page(profile, self)
+        self._page = Page(self)
         self._page.set_title.connect(self.set_title.emit)
         self._page.refresh_all.connect(self.refresh_all.emit)
         self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))
         self.renderProcessTerminated.connect(self.render_process_terminated)
+
+    def break_cycles(self):
+        self._page.break_cycles()
+        self._page = None
+        self.set_title.disconnect()
+        self.refresh_all.disconnect()
+        self.titleChanged.disconnect()
+        self.renderProcessTerminated.disconnect()
+        self.setPage(None)
 
     def render_process_terminated(self, termination_type, exit_code):
         if termination_type == QWebEnginePage.CrashedTerminationStatus:
