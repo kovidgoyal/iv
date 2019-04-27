@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, ev):
         self.view.break_cycles()
         self.view = None
+        sys.excepthook = sys.__excepthook__
         return super().closeEvent(ev)
 
     def excepthook(self, exctype, value, traceback):
