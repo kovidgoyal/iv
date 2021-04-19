@@ -56,8 +56,9 @@ class MainWindow(QMainWindow):
         self.set_title(None)
 
     def closeEvent(self, ev):
-        self.view.break_cycles()
-        self.view.setParent(None)
+        if self.view is not None:
+            self.view.break_cycles()
+            self.view.setParent(None)
         self.view = None
         self.setCentralWidget(None)
         sys.excepthook = sys.__excepthook__
