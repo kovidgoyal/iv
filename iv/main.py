@@ -2,16 +2,17 @@
 # vim:fileencoding=utf-8
 # License: GPL v3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-import os
-import sys
 import argparse
 import mimetypes
+import os
+import sys
 from gettext import gettext as _
 
-from PyQt5.Qt import QApplication, QMainWindow, QMessageBox, QFileSystemWatcher, Qt, QTimer
+from PyQt6.QtCore import QFileSystemWatcher, Qt, QTimer
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from .constants import appname
-from .view import View, setup_profile, path_to_url, file_metadata
+from .view import View, file_metadata, path_to_url, setup_profile
 
 
 def is_supported_file_type(f):
@@ -44,8 +45,8 @@ class MainWindow(QMainWindow):
         self.files = files
         self.directories = {os.path.dirname(f['path']) for f in files.values()}
         self.file_watcher = QFileSystemWatcher([f['path'] for f in files.values()] + list(self.directories), self)
-        self.file_watcher.fileChanged.connect(self.file_changed, type=Qt.QueuedConnection)
-        self.file_watcher.directoryChanged.connect(self.directory_changed, type=Qt.QueuedConnection)
+        self.file_watcher.fileChanged.connect(self.file_changed, type=Qt.ConnectionType.QueuedConnection)
+        self.file_watcher.directoryChanged.connect(self.directory_changed, type=Qt.ConnectionType.QueuedConnection)
         self.changed_files = set()
         self.changed_dirs = set()
         self.debounce_files, self.debounce_dirs = QTimer(), QTimer()
@@ -171,4 +172,4 @@ def main():
     setup_profile(files)
     w = MainWindow(files)
     w.show()
-    app.exec_()
+    app.exec()

@@ -2,15 +2,19 @@
 # vim:fileencoding=utf-8
 # License: GPL v3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-import os
 import glob
 import json
+import os
 import subprocess
+from contextlib import suppress
 from functools import lru_cache
 from gettext import gettext as _
 
-from PyQt5.Qt import Qt, QUrl, pyqtSignal, QMessageBox
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript, QWebEngineProfile, QWebEnginePage
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtWebEngineCore import (QWebEnginePage, QWebEngineProfile,
+                                   QWebEngineScript, QWebEngineSettings)
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QMessageBox
 
 from .constants import appname, cache_dir, config_dir
 
@@ -24,7 +28,8 @@ def safe_makedirs(path):
         pass
 
 
-def create_script(name, src, world=QWebEngineScript.ApplicationWorld, injection_point=QWebEngineScript.DocumentCreation, on_subframes=True):
+def create_script(name, src,
+                  world=QWebEngineScript.ScriptWorldId.ApplicationWorld, injection_point=QWebEngineScript.InjectionPoint.DocumentCreation, on_subframes=True):
     script = QWebEngineScript()
     script.setSourceCode(src)
     script.setName(name)
@@ -88,25 +93,28 @@ def files_data(files):
 def insert_scripts(profile, *scripts):
     sc = profile.scripts()
     for script in scripts:
-        for existing in sc.findScripts(script.name()):
+        for existing in sc.find(script.name()):
             sc.remove(existing)
     for script in scripts:
         sc.insert(script)
 
 
 def setup_profile(files):
-    ans = QWebEngineProfile.defaultProfile()
-    ans.setCachePath(os.path.join(cache_dir, appname, 'cache'))
-    safe_makedirs(ans.cachePath())
-    ans.setPersistentStoragePath(os.path.join(cache_dir, appname, 'storage'))
-    safe_makedirs(ans.persistentStoragePath())
+    ans = QWebEngineProfile()
+    cp = os.path.join(cache_dir, appname, 'cache')
+    safe_makedirs(cp)
+    ans.setCachePath(cp)
+    sp = os.path.join(cache_dir, appname, 'storage')
+    safe_makedirs(sp)
+    ans.setPersistentStoragePath(sp)
     ua = ' '.join(x for x in ans.httpUserAgent().split() if 'QtWebEngine' not in x)
     ans.setHttpUserAgent(ua)
     insert_scripts(ans, files_data(files), client_script())
     s = ans.settings()
     s.setDefaultTextEncoding('utf-8')
-    s.setAttribute(s.FullScreenSupportEnabled, True)
-    s.setAttribute(s.LinksIncludedInFocusChain, False)
+    s.setAttribute(QWebEngineSettings.WebAttribute.FullScreenSupportEnabled, True)
+    s.setAttribute(QWebEngineSettings.WebAttribute.LinksIncludedInFocusChain, False)
+    setup_profile.default_profile = ans
     return ans
 # }}}
 
@@ -126,22 +134,19 @@ class Page(QWebEnginePage):
     refresh_all = pyqtSignal()
 
     def __init__(self, parent):
-        QWebEnginePage.__init__(self, parent)
+        QWebEnginePage.__init__(self, setup_profile.default_profile, parent)
 
     def break_cycles(self):
         self.set_title.disconnect()
         self.refresh_all.disconnect()
-        self.setParent(None)
 
     def javaScriptConsoleMessage(self, level, msg, linenumber, source_id):
-        try:
-            print(msg)
-        except Exception:
-            pass
+        with suppress(Exception):
+            print(f'{source_id}:{linenumber}:{msg}')
 
     def check_for_messages_from_js(self, title):
         self.runJavaScript('try { window.get_messages_from_javascript() } catch(TypeError) {}',
-                           QWebEngineScript.ApplicationWorld, self.messages_received_from_js)
+                           QWebEngineScript.ScriptWorldId.ApplicationWorld, self.messages_received_from_js)
 
     def messages_received_from_js(self, messages):
         if messages and messages != '[]':
@@ -156,9 +161,9 @@ class Page(QWebEnginePage):
     def calljs(self, func, *args, callback=None):
         js = 'window.{}.apply(this, {})'.format(func, json.dumps(args))
         if callback is None:
-            self.runJavaScript(js, QWebEngineScript.ApplicationWorld)
+            self.runJavaScript(js, QWebEngineScript.ScriptWorldId.ApplicationWorld)
         else:
-            self.runJavaScript(js, QWebEngineScript.ApplicationWorld, callback)
+            self.runJavaScript(js, QWebEngineScript.ScriptWorldId.ApplicationWorld, callback)
 
     def update_settings(self, vals):
         update_config(vals)
@@ -187,7 +192,7 @@ class View(QWebEngineView):
         self._page = Page(self)
         self._page.set_title.connect(self.set_title.emit)
         self._page.refresh_all.connect(self.refresh_all.emit)
-        self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.QueuedConnection)
+        self.titleChanged.connect(self._page.check_for_messages_from_js, type=Qt.ConnectionType.QueuedConnection)
         self.setPage(self._page)
         self.load(QUrl.fromLocalFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')))
         self.renderProcessTerminated.connect(self.render_process_terminated)
@@ -199,13 +204,12 @@ class View(QWebEngineView):
         self.refresh_all.disconnect()
         self.titleChanged.disconnect()
         self.renderProcessTerminated.disconnect()
-        self.setPage(None)
 
     def render_process_terminated(self, termination_type, exit_code):
-        if termination_type == QWebEnginePage.CrashedTerminationStatus:
+        if termination_type == QWebEnginePage.RenderProcessTerminationStatus.CrashedTerminationStatus:
             QMessageBox.critical(self.parent(), _('Render process crashed'), _(
                 'The render process crashed while displaying the images with exit code: {}').format(exit_code))
-        elif termination_type == QWebEnginePage.AbnormalTerminationStatus:
+        elif termination_type == QWebEnginePage.RenderProcessTerminationStatus.AbnormalTerminationStatus:
             QMessageBox.critical(self.parent(), _('Render process exited'), _(
                 'The render process exited while displaying the images with exit code: {}').format(exit_code))
 

@@ -5,7 +5,7 @@
 import os
 import sys
 
-from PyQt5.Qt import QStandardPaths
+from PyQt6.QtCore import QStandardPaths
 
 appname = 'iv'
 
@@ -23,7 +23,7 @@ def _get_cache_dir():
     if 'IV_CACHE_DIRECTORY' in os.environ:
         return os.path.abspath(os.path.expanduser(os.environ['IV_CACHE_DIRECTORY']))
 
-    candidate = QStandardPaths.writableLocation(QStandardPaths.CacheLocation)
+    candidate = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.CacheLocation)
     if not candidate and not iswindows and not isosx:
         candidate = os.path.expanduser(os.environ.get('XDG_CACHE_HOME', u'~/.cache'))
     if not candidate:
@@ -43,7 +43,7 @@ def _get_config_dir():
     if 'IV_CONFIG_DIRECTORY' in os.environ:
         return os.path.abspath(os.path.expanduser(os.environ['IV_CONFIG_DIRECTORY']))
 
-    candidate = QStandardPaths.writableLocation(QStandardPaths.ConfigLocation)
+    candidate = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.ConfigLocation)
     if not candidate:
         if isosx:
             candidate = os.path.expanduser('~/Library/Preferences')
