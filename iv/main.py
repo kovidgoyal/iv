@@ -8,7 +8,7 @@ import os
 import sys
 from gettext import gettext as _
 
-from PyQt6.QtCore import QFileSystemWatcher, Qt, QTimer
+from PyQt6.QtCore import QFileSystemWatcher, Qt, QTimer, QLoggingCategory
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from .constants import appname
@@ -169,6 +169,9 @@ def main():
     app = QApplication([appname])
     app.setApplicationName(appname)
     app.setOrganizationName(appname)
+    QLoggingCategory.setFilterRules('''\
+qt.webenginecontext.info=false
+''')
     setup_profile(files)
     w = MainWindow(files)
     w.show()
